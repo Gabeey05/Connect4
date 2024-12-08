@@ -1,0 +1,201 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>GameController.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Connect4Line</a> &gt; <a href="index.source.html" class="el_package">org.progtech.Controllers</a> &gt; <span class="el_source">GameController.java</span></div><h1>GameController.java</h1><pre class="source lang-java linenums">package org.progtech.Controllers;
+
+import org.progtech.DB.DbConnection;
+import org.progtech.Models.GameModel;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.util.Random;
+import java.util.Scanner;
+
+public class GameController {
+    private final GameModel model;
+    private final Scanner scanner;
+    private final Random random;
+    private final DbConnection dbConnection;
+    private String playerName;
+
+<span class="fc" id="L19">    public GameController(GameModel model, DbConnection dbConnection) {</span>
+<span class="fc" id="L20">        this.model = model;</span>
+<span class="fc" id="L21">        this.dbConnection = dbConnection;</span>
+<span class="fc" id="L22">        this.scanner = new Scanner(System.in);</span>
+<span class="fc" id="L23">        this.random = new Random();</span>
+<span class="fc" id="L24">    }</span>
+
+    public void mainMenu() {
+        while (true) {
+<span class="nc" id="L28">            System.out.println(&quot;\nVálassz egy lehetőséget:&quot;);</span>
+<span class="nc" id="L29">            System.out.println(&quot;1. Győztesek rangsora&quot;);</span>
+<span class="nc" id="L30">            System.out.println(&quot;2. Játék indítása&quot;);</span>
+<span class="nc" id="L31">            System.out.print(&quot;Add meg a választásod (1 vagy 2): &quot;);</span>
+
+<span class="nc" id="L33">            String choice = scanner.nextLine().trim();</span>
+<span class="nc bnc" id="L34" title="All 3 branches missed.">            switch (choice) {</span>
+<span class="nc" id="L35">                case &quot;1&quot; -&gt; showWinnersRank();</span>
+                case &quot;2&quot; -&gt; {
+<span class="nc" id="L37">                    startGame();</span>
+<span class="nc" id="L38">                    return; // Exit the menu after the game</span>
+                }
+<span class="nc" id="L40">                default -&gt; System.out.println(&quot;Hibás választás. Próbáld újra!&quot;);</span>
+            }
+<span class="nc" id="L42">        }</span>
+    }
+
+    public void startGame() {
+<span class="nc" id="L46">        askPlayerName();</span>
+<span class="nc" id="L47">        System.out.println(&quot;Üdvözöllek a Connect 4 játékban, &quot; + playerName + &quot;!&quot;);</span>
+<span class="nc" id="L48">        displayBoard();</span>
+
+        while (true) {
+<span class="nc" id="L51">            char currentPlayer = model.getCurrentPlayer();</span>
+<span class="nc bnc" id="L52" title="All 2 branches missed.">            System.out.println(&quot;Aktuális játékos: &quot; + (currentPlayer == 'Y' ? &quot;Sárga (&quot; + playerName + &quot;)&quot; : &quot;Piros (gép)&quot;));</span>
+
+<span class="nc bnc" id="L54" title="All 2 branches missed.">            int move = (currentPlayer == 'Y') ? getPlayerMove() : getComputerMove();</span>
+
+<span class="nc bnc" id="L56" title="All 2 branches missed.">            if (!model.makeMove(move)) {</span>
+<span class="nc" id="L57">                System.out.println(&quot;Érvénytelen lépés. Próbáld újra!&quot;);</span>
+<span class="nc" id="L58">                continue;</span>
+            }
+
+<span class="nc" id="L61">            displayBoard();</span>
+
+<span class="nc bnc" id="L63" title="All 2 branches missed.">            if (model.isWinningMove(move)) {</span>
+<span class="nc bnc" id="L64" title="All 2 branches missed.">                System.out.println(&quot;Győzött: &quot; + (currentPlayer == 'Y' ? &quot;Sárga (&quot; + playerName + &quot;)&quot; : &quot;Piros (gép)&quot;));</span>
+<span class="nc bnc" id="L65" title="All 2 branches missed.">                if (currentPlayer == 'Y') savePlayerWin(playerName);</span>
+                break;
+            }
+
+<span class="nc bnc" id="L69" title="All 2 branches missed.">            if (model.isBoardFull()) {</span>
+<span class="nc" id="L70">                System.out.println(&quot;Döntetlen! A tábla megtelt.&quot;);</span>
+<span class="nc" id="L71">                break;</span>
+            }
+
+<span class="nc" id="L74">            model.switchPlayer();</span>
+<span class="nc" id="L75">        }</span>
+<span class="nc" id="L76">    }</span>
+
+    public void askPlayerName() {
+<span class="nc" id="L79">        System.out.print(&quot;Kérlek, add meg a neved: &quot;);</span>
+<span class="nc" id="L80">        playerName = scanner.nextLine().trim();</span>
+<span class="nc bnc" id="L81" title="All 2 branches missed.">        if (playerName.isEmpty()) {</span>
+<span class="nc" id="L82">            playerName = &quot;Játékos&quot;;</span>
+        }
+<span class="nc" id="L84">    }</span>
+
+    public int getPlayerMove() {
+        while (true) {
+<span class="nc" id="L88">            System.out.print(&quot;Válassz oszlopot (a-&quot; + (char) ('a' + model.getBoard()[0].length - 1) + &quot;): &quot;);</span>
+<span class="nc" id="L89">            String input = scanner.nextLine().trim().toLowerCase();</span>
+<span class="nc bnc" id="L90" title="All 2 branches missed.">            if (input.length() == 1) {</span>
+<span class="nc" id="L91">                char column = input.charAt(0);</span>
+<span class="nc" id="L92">                int colIndex = column - 'a';</span>
+<span class="nc bnc" id="L93" title="All 4 branches missed.">                if (colIndex &gt;= 0 &amp;&amp; colIndex &lt; model.getBoard()[0].length) {</span>
+<span class="nc" id="L94">                    return colIndex;</span>
+                }
+            }
+<span class="nc" id="L97">            System.out.println(&quot;Hibás bemenet. Próbáld újra!&quot;);</span>
+<span class="nc" id="L98">        }</span>
+    }
+
+    private int getComputerMove() {
+        int col;
+        do {
+<span class="nc" id="L104">            col = random.nextInt(model.getBoard()[0].length);</span>
+<span class="nc bnc" id="L105" title="All 2 branches missed.">        } while (model.getBoard()[0][col] != ' '); // Only select valid columns</span>
+<span class="nc" id="L106">        System.out.println(&quot;Gép választása: &quot; + (char) ('a' + col));</span>
+<span class="nc" id="L107">        return col;</span>
+    }
+
+    private void displayBoard() {
+<span class="nc" id="L111">        char[][] board = model.getBoard();</span>
+<span class="nc" id="L112">        System.out.print(&quot;  &quot;);</span>
+<span class="nc bnc" id="L113" title="All 2 branches missed.">        for (int col = 0; col &lt; board[0].length; col++) {</span>
+<span class="nc" id="L114">            System.out.print((char) ('a' + col) + &quot; &quot;);</span>
+        }
+<span class="nc" id="L116">        System.out.println();</span>
+
+<span class="nc bnc" id="L118" title="All 2 branches missed.">        for (int row = 0; row &lt; board.length; row++) {</span>
+<span class="nc" id="L119">            System.out.print((board.length - row) + &quot; &quot;);</span>
+<span class="nc bnc" id="L120" title="All 2 branches missed.">            for (int col = 0; col &lt; board[0].length; col++) {</span>
+<span class="nc" id="L121">                System.out.print(&quot;|&quot; + board[row][col]);</span>
+            }
+<span class="nc" id="L123">            System.out.println(&quot;|&quot;);</span>
+        }
+<span class="nc" id="L125">        System.out.print(&quot;  &quot;);</span>
+<span class="nc" id="L126">        System.out.println(&quot;-&quot;.repeat(2 * board[0].length + 1));</span>
+<span class="nc" id="L127">    }</span>
+
+    public void savePlayerWin(String playerName) {
+<span class="fc" id="L130">        Connection connection = dbConnection.getConnection();</span>
+
+<span class="pc bpc" id="L132" title="1 of 2 branches missed.">        if (connection == null) {</span>
+<span class="nc" id="L133">            System.out.println(&quot;Nem sikerült kapcsolódni az adatbázishoz.&quot;);</span>
+<span class="nc" id="L134">            return;</span>
+        }
+
+        try {
+<span class="fc" id="L138">            String selectQuery = &quot;SELECT winNum FROM playerswin WHERE name = ?&quot;;</span>
+<span class="fc" id="L139">            PreparedStatement selectStmt = connection.prepareStatement(selectQuery);</span>
+<span class="fc" id="L140">            selectStmt.setString(1, playerName);</span>
+<span class="fc" id="L141">            ResultSet resultSet = selectStmt.executeQuery();</span>
+
+<span class="fc bfc" id="L143" title="All 2 branches covered.">            if (resultSet.next()) {</span>
+<span class="fc" id="L144">                int currentWins = resultSet.getInt(&quot;winNum&quot;);</span>
+<span class="fc" id="L145">                String updateQuery = &quot;UPDATE playerswin SET winNum = ? WHERE name = ?&quot;;</span>
+<span class="fc" id="L146">                PreparedStatement updateStmt = connection.prepareStatement(updateQuery);</span>
+<span class="fc" id="L147">                updateStmt.setInt(1, currentWins + 1);</span>
+<span class="fc" id="L148">                updateStmt.setString(2, playerName);</span>
+<span class="fc" id="L149">                updateStmt.executeUpdate();</span>
+<span class="fc" id="L150">                updateStmt.close();</span>
+<span class="fc" id="L151">                System.out.println(&quot;Frissítve a győzelmi szám.&quot;);</span>
+<span class="fc" id="L152">            } else {</span>
+<span class="fc" id="L153">                String insertQuery = &quot;INSERT INTO playerswin (name, winNum) VALUES (?, ?)&quot;;</span>
+<span class="fc" id="L154">                PreparedStatement insertStmt = connection.prepareStatement(insertQuery);</span>
+<span class="fc" id="L155">                insertStmt.setString(1, playerName);</span>
+<span class="fc" id="L156">                insertStmt.setInt(2, 1);</span>
+<span class="fc" id="L157">                insertStmt.executeUpdate();</span>
+<span class="fc" id="L158">                insertStmt.close();</span>
+<span class="fc" id="L159">                System.out.println(&quot;Játékos hozzáadva az adatbázishoz.&quot;);</span>
+            }
+
+<span class="fc" id="L162">            resultSet.close();</span>
+<span class="fc" id="L163">            selectStmt.close();</span>
+<span class="fc" id="L164">            connection.close();</span>
+<span class="nc" id="L165">        } catch (Exception e) {</span>
+<span class="nc" id="L166">            System.out.println(&quot;Hiba történt az adatbázisművelet során: &quot; + e.getMessage());</span>
+<span class="nc" id="L167">            e.printStackTrace();</span>
+<span class="fc" id="L168">        }</span>
+<span class="fc" id="L169">    }</span>
+
+    public void showWinnersRank() {
+<span class="fc" id="L172">        Connection connection = dbConnection.getConnection();</span>
+
+<span class="pc bpc" id="L174" title="1 of 2 branches missed.">        if (connection == null) {</span>
+<span class="nc" id="L175">            System.out.println(&quot;Nem sikerült kapcsolódni az adatbázishoz.&quot;);</span>
+<span class="nc" id="L176">            return;</span>
+        }
+
+        try {
+<span class="fc" id="L180">            String query = &quot;SELECT name, winNum FROM playerswin ORDER BY winNum DESC&quot;;</span>
+<span class="fc" id="L181">            PreparedStatement statement = connection.prepareStatement(query);</span>
+<span class="fc" id="L182">            ResultSet resultSet = statement.executeQuery();</span>
+
+<span class="fc" id="L184">            System.out.println(&quot;\nGyőztesek rangsora:&quot;);</span>
+<span class="fc" id="L185">            System.out.println(&quot;-------------------&quot;);</span>
+<span class="fc bfc" id="L186" title="All 2 branches covered.">            while (resultSet.next()) {</span>
+<span class="fc" id="L187">                String name = resultSet.getString(&quot;name&quot;);</span>
+<span class="fc" id="L188">                int wins = resultSet.getInt(&quot;winNum&quot;);</span>
+<span class="fc" id="L189">                System.out.println(name + &quot;: &quot; + wins + &quot; győzelem&quot;);</span>
+<span class="fc" id="L190">            }</span>
+
+<span class="fc" id="L192">            resultSet.close();</span>
+<span class="fc" id="L193">            statement.close();</span>
+<span class="fc" id="L194">            connection.close();</span>
+<span class="nc" id="L195">        } catch (Exception e) {</span>
+<span class="nc" id="L196">            System.out.println(&quot;Hiba történt a rangsor lekérdezése során: &quot; + e.getMessage());</span>
+<span class="nc" id="L197">            e.printStackTrace();</span>
+<span class="fc" id="L198">        }</span>
+<span class="fc" id="L199">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.10.202304240956</span></div></body></html>
